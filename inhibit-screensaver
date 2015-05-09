@@ -1,27 +1,36 @@
 #!/bin/bash
+xset s on
+xset +dpms
 
-xprop -spy -root _NET_ACTIVE_WINDOW |
-	while read line; do
-		kill $! 2> /dev/null
-
-		fullscreen=false
-		window_id=${line##*# }
-		window_id=${window_id%,*}
-
-		[ "$window_id" = "0x0" ] && continue
-
-		xprop -id $window_id -spy _NET_WM_STATE |
-			while read line; do
-				if [[ "$line" == *"_NET_WM_STATE_FULLSCREEN"* ]]; then
-					echo "$window_id fullscreen"
+while :; do
+	focused=true
+	fullscreen=false
+	active_window=$(xdotool getactivewindow)
+	echo "$active_window is active"
+	
+	#Monitor active window
+	xprop -id $active_window -spy _NET_WM_STATE |
+		while read line; do
+			[[ "$line" != *"_NET_WM_STATE_FOCUSED"* ]] && focused=false #Lost focus
+			
+			if $focused && [[ "$line" == *"_NET_WM_STATE_FULLSCREEN"* ]]; then
+				if ! $fullscreen; then
+					#Window state changed to fullscreen
+					echo "Screensaver disabled"
 					fullscreen=true
 					xset s off
 					xset -dpms
-				elif $fullscreen; then
-					echo "$window_id windowed"
-					fullscreen=false
-					xset s on
-					xset +dpms
 				fi
-			done &
-	done
+			elif $fullscreen; then
+				#State changed, active is no longer fullscreen
+				echo "Screensaver enabled"
+				fullscreen=false
+				xset s on
+				xset +dpms
+			fi
+			
+			#Window lost focus, get new active
+			! $focused && kill $!
+		done &
+	wait $!
+done
