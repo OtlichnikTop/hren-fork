@@ -1,0 +1,19 @@
+#!/bin/bash
+
+card="$(lspci | grep -i VGA)"     # Detect which card
+drivers=$(pacman -Qqs xf86-video) # Get list of installed video drivers
+xdriver="vesa"                    # Default driver if none found
+for driver in $drivers; do
+	driver="${driver##*-}"
+	if grep -i "$driver" <<< $card > /dev/null; then
+		#Driver found for card
+		xdriver="$driver"
+		break
+	fi
+done
+
+#Link the cards xorg config file so xorg can read it
+ln -sf "/etc/X11/mhwd.d/$xdriver.conf" "/etc/X11/xorg.conf.d/90-mhwd.conf"
+
+#Launch X
+exec /usr/bin/X "$@"
