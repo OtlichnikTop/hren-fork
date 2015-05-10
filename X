@@ -1,19 +1,23 @@
 #!/bin/bash
 
+destination="/etc/X11/xorg.conf.d/90-mhwd.conf" # Destination dir for config file
+
+config_file="/etc/X11/mhwd.d/vesa.conf"         # Default config file if none found
+config_files="/etc/X11/mhwd.d/*"
+
 card="$(lspci | grep -i VGA)"     # Detect which card
-drivers=$(pacman -Qqs xf86-video) # Get list of installed video drivers
-xdriver="vesa"                    # Default driver if none found
-for driver in $drivers; do
-	driver="${driver##*-}"
-	if grep -i "$driver" <<< $card > /dev/null; then
-		#Driver found for card
-		xdriver="$driver"
+for config in $config_files; do
+	driver="${config##*/}"
+	driver="${driver%*.conf}"
+	if grep -i "$driver" <<< "$card" > /dev/null; then
+		#Config file found
+		config_file=$config
 		break
 	fi
 done
 
 #Link the cards xorg config file so xorg can read it
-ln -sf "/etc/X11/mhwd.d/$xdriver.conf" "/etc/X11/xorg.conf.d/90-mhwd.conf"
+ln -sf $config_file $destination
 
 #Launch X
 exec /usr/bin/X "$@"
