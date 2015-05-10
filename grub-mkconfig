@@ -1,0 +1,26 @@
+#!/bin/bash
+
+case $1 in
+	-o|--output=*|"")
+		o=$2
+		if [[ $1 == --output* ]]; then
+			o="${1##*=}"
+		fi
+		config=$(env - grub-mkconfig)
+		while read line; do
+			uuid=$(cut -s -d\  -f 2 <<< $line)
+			if [[ $uuid != "" ]]; then
+				path=$(cut -d\  -f 1 <<< $line)
+				config=$(sed "s%$path%UUID=$uuid%g" <<< "$config")
+			fi
+		done <<< "$(lsblk -flnp -o NAME,UUID)"
+
+		if [[ $o == "" ]]; then
+			[ -z "${config: -1}" ] && n="-n"
+			echo $n "$config"
+		else
+			echo "$config" > $o
+		fi
+		;;
+	*) $grub $@;;
+esac
