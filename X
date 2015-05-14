@@ -9,15 +9,15 @@ card="$(lspci | grep -i VGA)"     # Detect which card
 for config in $config_files; do
 	driver="${config##*/}"
 	driver="${driver%*.conf}"
-	if grep -i "$driver" <<< "$card" > /dev/null; then
+	if grep -iw "$driver" <<< "$card" > /dev/null; then
 		#Config file found
-		config_file=$config
+		config_file="$config"
 		break
 	fi
 done
 
 #Link the cards xorg config file so xorg can read it
-ln -sf $config_file $destination
+ln -sf "$config_file" "$destination"
 
 #Launch X
 exec /usr/bin/X "$@"
