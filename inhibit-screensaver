@@ -27,4 +27,5 @@ while :; do
 			xset +dpms
 		fi
 	done < <(exec xprop -id $active_window -spy _NET_WM_STATE)
+	kill $! 2> /dev/null #Xprop doesn't exit sometimes, kill it.
 done
