@@ -5,3 +5,5 @@ Miscellaneous scripts
 
 **grub-mkconfig**: Wrapper that replaces /dev/device with the UUID due to root f2fs not detected properly.
 
+**class.lua**: A python-esque class builder for Lua
+
