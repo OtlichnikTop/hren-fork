@@ -80,7 +80,6 @@ function class(def)
             return value ~= nil and value or env[name]
         end,
         __newindex = function(t, name, value)
-                print(name, value)
                 class[name] = value
             end,
     })
