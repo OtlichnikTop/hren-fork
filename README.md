@@ -5,7 +5,7 @@ Miscellaneous scripts
 
 **inhibit-screensaver(sh)**: Alternative version that should be lighter and more reliable.
 
-**lock_on_screensaver**: Lock the screen after the screensaver has been activated
+**lock-on-screensaver**: Lock the screen after the screensaver has been activated
 
 **grub-mkconfig**: Wrapper that replaces /dev/device with the UUID due to root f2fs not detected properly.
 
