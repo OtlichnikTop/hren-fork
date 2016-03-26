@@ -1,0 +1,11 @@
+#!/bin/sh
+
+timeout=10 #Lock screen after being blanked for n seconds
+dbus-monitor --session "type='signal',interface='org.freedesktop.ScreenSaver',member='ActiveChanged'" |
+	while read line; do
+		if [[ "$line" == *'true'*  ]]; then
+			sleep $timeout && #Don't lock if user gives input in $timeout seconds
+				[[ $(qdbus org.freedesktop.ScreenSaver /ScreenSaver org.freedesktop.ScreenSaver.GetActive) == 'true' ]] &&
+					xflock4& #<- The screen locker
+		fi
+	done &
