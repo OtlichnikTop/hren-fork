@@ -1,0 +1,21 @@
+#!/bin/sh
+
+size=( $(xprop -root _NET_DESKTOP_GEOMETRY | grep -oE '[0-9]+') )                      #Get display size
+size="${size[0]}x${size[1]}"
+
+xprop -root -spy -f _NET_CLIENT_LIST_STACKING 32x '$1+\n' _NET_CLIENT_LIST_STACKING |  #Watch window stack
+		while read ids; do
+			ids=( $ids )
+			id=${ids[-1]}
+			
+			wsize=( $(xwininfo -id $id | grep -E "Width|Height") )                     #Get size of active window
+			if [[ "${wsize[1]}x${wsize[3]}" == "$size" ]]; then                        #Compare display size and window size
+				echo "Screensaver disabled"                                            #The window is fullscreen if they're the same size
+				xset s off
+				xset -dpms
+			else                                                                       #The window is not fullscreen if they're the same size
+				echo "Screensaver enabled"
+				xset s on
+				xset +dpms
+			fi
+		done &
