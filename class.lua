@@ -1,48 +1,72 @@
+--- Set to true, to run throw pcall. Set false to just run and do nothing about YOUR errors.
+ClassFunctionSafeRunning = true
+
 function class(def)
     local class = {}
     local parents = {}
-    
+
     local upv
     local env = _G
-    
+
     local wraps
     local function super(parent_class)
         if not parent_class then
             parent_class = parents[1]
         end
-        
+
         local this = this
         local that = {}
         for k,v in pairs(parent_class) do
             that[k] = type(v) == 'function' and wraps(this, v) or v
         end
-        
+
         return setmetatable(that, that)
     end
-    
+
     function wraps(this, func)
-        return function(...)
+        if (ClassFunctionSafeRunning) then -- Safely ignore errors function
+            return function(...)
                 local t = env.this
                 local s = env.super
-                
+
                 env.this  = this
                 env.super = super
-                
-                local ret  = pcall(func, ...)
+
+                local status, ret = pcall(func, ...)
 
                 env.this  = t
                 env.super = s
-                
+
+                if (!status) then
+                    print("[WARNING] Class function ended with error")
+                end
+
                 return ret
             end
+        else  -- Just run's your code...
+            return function(...)
+                local t   = env.this
+                local s   = env.super
+
+                env.this  = this
+                env.super = super
+
+                local ret = func(...)
+
+                env.this  = t
+                env.super = s
+
+                return ret
+            end
+        end
     end
-    
+
     function class.__init()end
 
     for i=1,math.huge do
         inherit, v = debug.getlocal(def, i)
         if not inherit then break end
-        
+
         local parent_class = _G[inherit]
         for i=1,math.huge do
             local  name, pclass = debug.getlocal(2,i,1)
@@ -62,8 +86,8 @@ function class(def)
             error(string.format('Class "%s" not valid.', name))
         end
     end
-    
-    
+
+
     for i=1,math.huge do
         local  name, value = debug.getupvalue(def, i)
         if not name then break
@@ -80,19 +104,19 @@ function class(def)
             return value ~= nil and value or env[name]
         end,
         __newindex = function(t, name, value)
-                class[name] = value
-            end,
+            class[name] = value
+        end,
     })
-    
+
     local function senv(env)
         if upv then debug.setupvalue(def, upv, env)
         else _G = env end
     end
-    
+
     senv(_env)
     env.pcall(def, env.table.unpack(parents))
     senv(env)
-    
+
     return setmetatable({}, {
         __ipairs    = function()        return ipairs(class)              end,
         __pairs     = function()        return  pairs(class)              end,
@@ -105,7 +129,7 @@ function class(def)
             end
             this.__class = class
             this.__init(...)
-            
+
             return setmetatable(this, this)
         end
     })
@@ -114,12 +138,12 @@ end
 global  = true
 Inherit = class(function()
     this_is_a_property_of_Inherit = true
-    
+
     function __init()
         print('Inherit().__init()')
         this.init = true
     end
-    
+
     function __call()
         print('Yay! You\'re calling for me :) init:', this.init, '\n')
     end
@@ -128,13 +152,13 @@ end)
 Example = class(function(Inherit)
     print('Inherited property:', this_is_a_property_of_Inherit)
     print('Global variable:   ', global, '\n')
-    
+
     function __init()
         print('Example().__init()')
         super().__init()
         print('this.init:', this.init)
     end
-    
+
     function test(...)
         print(..., this.__init, '\n')
     end
