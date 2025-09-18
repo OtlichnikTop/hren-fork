@@ -37,7 +37,7 @@ function class(def)
                 env.this  = t
                 env.super = s
 
-                if (!status) then
+                if (not status) then
                     print("[WARNING] Class function ended with error")
                 end
 
